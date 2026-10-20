@@ -1,0 +1,6 @@
+opencv-contrib-python==5.0.0.93   # all OpenCV trackers: MIL, KCF, CSRT, DaSiamRPN, Nano, Vit
+numpy                   # box maths for the metrics
+matplotlib              # success / precision plots
+pandas                  # leaderboard tables
+tqdm                    # progress bars
+gdown                   # VisDrone-SOT is hosted on Google Drive
