@@ -14,6 +14,7 @@ At the end the last frame stays on screen for 10 s (any key closes it sooner).
 
 Usage (from the repo root, with the venv active):
     python scripts/track_one.py --split val --seq 0
+    python scripts/track_one.py --seq 1 --tracker nano   # any name in sot.trackers.TRACKERS
 """
 
 import argparse                 # reads command-line options like --seq 7
@@ -21,21 +22,24 @@ import sys                      # gives access to sys.path, the list of folders 
 import time                     # perf_counter(): a precise clock for measuring speed
 from pathlib import Path
 
-import cv2                      # OpenCV: read images, run the CSRT tracker, draw, show windows
+import cv2                      # OpenCV: read images, draw, show windows
 
 # Python only imports from the script's own folder (scripts/) and installed packages, so
 # `import sot` would fail. Adding the repo root (parents[1]) to the front of sys.path fixes that.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from sot.dataset import load_split  # noqa: E402  (import must come after the sys.path line)
+from sot.trackers import TRACKERS, make_tracker  # noqa: E402  (builds any tracker by name)
 
 
 def main() -> None:
-    """Initialise CSRT on frame 0, update it on every later frame, and draw both boxes."""
+    """Initialise the chosen tracker on frame 0, update it on every later frame, and draw both boxes."""
     # --- Command-line options -------------------------------------------------------
     parser = argparse.ArgumentParser(description=__doc__)   # __doc__ = this file's docstring, shown by --help
     parser.add_argument("--split", default="val")           # which split to read from
     parser.add_argument("--seq", type=int, default=0, help="index of the sequence in the split")
-    args = parser.parse_args()                               # args.split and args.seq now hold the values
+    # choices= makes argparse reject unknown names and list the valid ones in --help.
+    parser.add_argument("--tracker", default="csrt", choices=list(TRACKERS))
+    args = parser.parse_args()                               # args.split, args.seq, args.tracker now hold the values
 
     # --- Load ------------------------------------------------------------------------
     seq = load_split(args.split)[args.seq]  # load every sequence in the split, keep the one at index --seq
@@ -43,7 +47,7 @@ def main() -> None:
     print(f"{seq.name}: {len(seq)} frames, attributes: {[a for a, on in seq.attributes.items() if on]}")
 
     # --- Initialise: the tracker sees frame 0 and the init box, nothing else ---------
-    tracker = cv2.TrackerCSRT.create()      # a fresh CSRT tracker (classical correlation filter, no model file)
+    tracker = make_tracker(args.tracker)    # a fresh tracker of the chosen kind (deep ones load their ONNX weights here)
     first = cv2.imread(str(seq.frames[0]))  # frame 0 as a (height, width, 3) BGR array
     # init() learns what the target looks like from the pixels inside init_box (x, y, w, h ints).
     tracker.init(first, seq.init_box)
@@ -81,9 +85,9 @@ def main() -> None:
 
     # --- Summary ---------------------------------------------------------------------
     # i is the last frame number reached. The time also includes reading, drawing and showing
-    # images (and any paused time), so this is the speed of the whole loop, a bit below CSRT's own.
+    # images (and any paused time), so this is the speed of the whole loop, a bit below the tracker's own.
     fps = i / (time.perf_counter() - start)
-    print(f"tracked {i} frames at {fps:.1f} fps, tracker reported lost on {lost} frames")
+    print(f"{args.tracker}: tracked {i} frames at {fps:.1f} fps, tracker reported lost on {lost} frames")
 
     # Keep the last frame on screen for 10 s so you can note down the result before the
     # window closes. waitKey takes milliseconds; pressing any key ends the wait early.
