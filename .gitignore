@@ -11,6 +11,8 @@ models/*
 runs/
 *.onnx
 *.mp4
+# Generated API reference: rebuild with pdoc, never commit (git has no end-of-line comments)
+docs/api/
 
 # Editors / OS
 .vscode/

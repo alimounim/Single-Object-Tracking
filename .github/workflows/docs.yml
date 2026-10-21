@@ -1,0 +1,53 @@
+# Build the API reference from the docstrings with pdoc and publish it on GitHub Pages.
+#
+# Runs on every push to main, so the website always matches the latest code:
+#     https://alimounim.github.io/Single-Object-Tracking/
+# It can also be started by hand from the repo's Actions tab ("Run workflow").
+# One-time setup on GitHub: Settings -> Pages -> Source: "GitHub Actions".
+
+name: API docs
+
+on:
+  push:
+    branches: [main]          # rebuild whenever main changes
+  workflow_dispatch:          # adds a "Run workflow" button in the Actions tab
+
+# The minimum rights the job needs: read the code, write to Pages, and prove its identity
+# to Pages (id-token) so the upload is accepted.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# If two pushes arrive close together, cancel the older build: only the newest docs matter.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest    # a fresh Linux machine provided by GitHub for each run
+    steps:
+      - uses: actions/checkout@v4             # copy the repo's code onto the machine
+      - uses: actions/setup-python@v5         # install the same Python version as the venv
+        with:
+          python-version: "3.13"
+      # OpenCV needs the system OpenGL library to import, which a bare Linux machine may lack.
+      - run: sudo apt-get update && sudo apt-get install -y libgl1
+      # pdoc imports every module to read it, so the project's packages must be installed.
+      - run: pip install -r requirements.txt
+      # Same command as locally: the sot package plus every script, written to site/.
+      - run: pdoc sot scripts/*.py -o site
+      - uses: actions/upload-pages-artifact@v3  # pack site/ for the deploy job
+        with:
+          path: site
+
+  deploy:
+    needs: build              # wait for a successful build first
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}   # shown as a link on the run's page
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4         # publish the packed site to GitHub Pages

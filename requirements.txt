@@ -4,3 +4,4 @@ matplotlib              # success / precision plots
 pandas                  # leaderboard tables
 tqdm                    # progress bars
 gdown                   # VisDrone-SOT is hosted on Google Drive
+pdoc                    # builds the API reference (HTML) from the docstrings
