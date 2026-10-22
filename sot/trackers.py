@@ -55,6 +55,14 @@ def _vit():
     params.net = _model("object_tracking_vittrack_2023sep.onnx")  # single ViT network: template + search in, box + score out
     return cv2.TrackerVit.create(params)             # build the tracker with these weights
 
+def _ostrack():
+    """OSTrack-256: one-stream ViT tracker, official pretrained weights, no fine-tuning (zero-shot).
+
+    Imported inside the function, not at the top of the file: loading PyTorch takes a few
+    seconds, so scripts that only use OpenCV trackers should not pay for it.
+    """
+    from sot.ostrack_tracker import OSTrackTracker
+    return OSTrackTracker()
 
 # --- Registry ---
 
@@ -68,6 +76,8 @@ TRACKERS = {
     "dasiamrpn": _dasiamrpn,            # Siamese + region proposals; 3 ONNX files, ~160 MB
     "nano": _nano,                      # Siamese, ~1.8 MB, very fast
     "vit": _vit,                        # transformer (attention over template + search tokens)
+    "ostrack": _ostrack,                # one-stream ViT (PyTorch, GPU); zero-shot = no VisDrone training
+
 }
 
 

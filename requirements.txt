@@ -5,3 +5,13 @@ pandas                  # leaderboard tables
 tqdm                    # progress bars
 gdown                   # VisDrone-SOT is hosted on Google Drive
 pdoc                    # builds the API reference (HTML) from the docstrings
+# --- OSTrack (step 9+) ---
+--extra-index-url https://download.pytorch.org/whl/cu128   # PyTorch's own server, for the CUDA (GPU) builds
+torch==2.11.0           # deep learning framework OSTrack is written in
+torchvision==0.26.0     # image utilities that come paired with this torch version
+timm                    # Vision Transformer building blocks used by OSTrack's backbone
+easydict                # OSTrack's config objects (cfg.MODEL.BACKBONE.TYPE style attribute access)
+pyyaml                  # reads OSTrack's experiment .yaml config files
+tensorboardX            # OSTrack logs training curves with it (imported even when only tracking)
+jpeg4py                 # OSTrack's fast JPEG reader for training (falls back to OpenCV on Windows)
+visdom                  # OSTrack's live-debug viewer; imported at startup even though we don't use it
